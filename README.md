@@ -1,1 +1,2 @@
 # HStudentProfile
+#Using FlexibleInstances extension

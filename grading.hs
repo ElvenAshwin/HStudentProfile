@@ -11,21 +11,33 @@ data EnrichmentGrade = Fail | Pass
                      | ENRMerit | Distinction deriving (Show, Read, Eq, Ord, Enum, Bounded)
 data DVGrade = Unsatisfactory | Satisfactory 
              | DVMerit | Excellent deriving (Show, Read, Eq, Ord, Enum, Bounded)
-type GradeRepresentation = String
+
 type Score = Double
-data LetterGrade = LetterGrade GradeRepresentation Score deriving (Eq)
+data LetterGrade = LetterGrade String Score deriving (Eq)
 
+class GradeRepresentation a where
+    index' :: a -> Maybe Int
+    index :: a -> Int 
+    index repr = extract $ index' repr
+        where extract (Just num) = num
+              extract Nothing = error "No such index"
 
+instance GradeRepresentation [Char] where
+    index' str = str `elemIndex` letters
+
+instance GradeRepresentation Char where
+    index' char = [char] `elemIndex` letters
+
+instance GradeRepresentation Double where
+    index' num = num `elemIndex` scores
+
+instance GradeRepresentation LetterGrade where
+    index' (LetterGrade repr score) = repr `elemIndex` letters
 letters = ["F","D","D+","C","C+","B-","B","B+","A-","A","A+"]
 scores = [0.0, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.0]
 
 letter_score_assoc = zip letters scores
 grades_assoc = map (\(letter,score) -> (LetterGrade letter score)) letter_score_assoc
-
-index :: LetterGrade -> Int
-index (LetterGrade repr score) = extract $ repr `elemIndex` letters
-    where extract (Just num) = num
-          extract Nothing = error "No such index"
 
 instance Show LetterGrade where
     show (LetterGrade repr _) = repr
@@ -56,9 +68,7 @@ instance Enum LetterGrade where
       | fst <= snd = enumFromThenTo fst snd maxBound
       | fst > snd = enumFromThenTo fst snd minBound
     
-lGrade :: GradeRepresentation -> LetterGrade
-lGrade repr = extract $ find (\(LetterGrade str _)->str==repr) grades_assoc
-    where extract (Just grade) = grade
-          extract Nothing = error "Not a grade"
+lGrade :: (GradeRepresentation a) => a-> LetterGrade
+lGrade repr = grades_assoc !! (index repr)
 
 
