@@ -1,12 +1,12 @@
-module Common (
-    boundedEnumFrom
-  , boundedEnumFromThen
-  , defaultEnumFromTo
-  , defaultEnumFromThenTo
-  , subList
-  , applyPair
-  , Stringable(..))
-      where
+module Common ( boundedEnumFrom
+              , boundedEnumFromThen
+              , defaultEnumFromTo
+              , defaultEnumFromThenTo
+              , subList
+              , quintupletMap
+              , showQuintuplet
+              , quintupletToList
+              , Stringable(..)) where
 
 class Stringable c where
     stringify :: [c] -> String
@@ -34,7 +34,12 @@ subList ls start end = drop s (take e ls)
     where s = fromIntegral start
           e = fromIntegral end
 
-applyPair :: (a -> b -> c) -> (a,b) -> c
-applyPair func (arg1, arg2) = func arg1 arg2
+quintupletMap :: ((a->a1),(b->b1),(c->c1),(d->d1),(e->e1)) -> (a,b,c,d,e) -> (a1,b1,c1,d1,e1)
+quintupletMap (af,bf,cf,df,ef) (a,b,c,d,e) = (af a, bf b, cf c, df d, ef e)
 
+showQuintuplet :: (Show a, Show b, Show c, Show d, Show e) => (a,b,c,d,e) -> (String, String, String, String, String)
+showQuintuplet quint = quintupletMap (show,show,show,show,show) quint
+
+quintupletToList :: (a,a,a,a,a) -> [a]
+quintupletToList (fst,snd,trd,frt,fft) = [fst,snd,trd,frt,fft]
 
