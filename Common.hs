@@ -2,7 +2,9 @@ module Common (
     boundedEnumFrom
   , boundedEnumFromThen
   , defaultEnumFromTo
-  , defaultEnumFromThenTo 
+  , defaultEnumFromThenTo
+  , subList
+  , applyPair
   , Stringable(..))
       where
 
@@ -26,3 +28,13 @@ defaultEnumFromTo from to = map toEnum [fromEnum from .. fromEnum to]
 
 defaultEnumFromThenTo :: (Enum a) => a -> a -> a -> [a]
 defaultEnumFromThenTo fst snd to = map toEnum [fromEnum fst, fromEnum snd .. fromEnum to]
+
+subList :: (Integral b) => [a] -> b -> b -> [a]
+subList ls start end = drop s (take e ls)
+    where s = fromIntegral start
+          e = fromIntegral end
+
+applyPair :: (a -> b -> c) -> (a,b) -> c
+applyPair func (arg1, arg2) = func arg1 arg2
+
+
