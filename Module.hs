@@ -34,5 +34,5 @@ year x =  assert (x>=1 && x<=6) $ Year x
 
 data YearType = Foundation | Intermediate | Advanced deriving (Show, Read, Eq, Ord, Enum)
 data ModuleType = Elective | Enrichment | Core | Honor deriving (Show, Read, Eq)
-data SuffixType = Preclusion | CorePrereq | MTinLieu | External deriving (Show, Read, Eq)
+data SuffixType = EmptySuffix | Preclusion | CorePrereq | MTinLieu | External deriving (Show, Read, Eq)
 
