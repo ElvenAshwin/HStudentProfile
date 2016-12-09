@@ -3,6 +3,7 @@ module Module(Year
              , YearType(..)
              , ModuleType(..)
              , SuffixType(..)
+             , asInt
              ) where
 
 import Control.Exception (assert)
@@ -31,6 +32,9 @@ instance Enum Year where
 
 year :: Int -> Year
 year x =  assert (x>=1 && x<=6) $ Year x
+
+asInt :: Year -> Int
+asInt (Year n) = n
 
 data YearType = Foundation | Intermediate | Advanced deriving (Show, Read, Eq, Ord, Enum)
 data ModuleType = Elective | Enrichment | Core | Honor deriving (Show, Read, Eq)
