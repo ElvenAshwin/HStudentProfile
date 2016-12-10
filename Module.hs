@@ -30,8 +30,10 @@ instance Enum Year where
     enumFromThen = boundedEnumFromThen
 
 
-year :: Int -> Year
-year x =  assert (x>=1 && x<=6) $ Year x
+year :: Int -> Maybe Year
+year x
+  | x>=1 && x<=6 = Just $ Year x
+  | otherwise = Nothing
 
 asInt :: Year -> Int
 asInt (Year n) = n

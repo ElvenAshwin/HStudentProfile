@@ -15,11 +15,12 @@ moduleTypeToInt Elective = 2
 moduleTypeToInt Enrichment = 3
 moduleTypeToInt Honor = 4
 
-intToModuleType :: Int -> ModuleType
-intToModuleType 1 = Core
-intToModuleType 2 = Elective
-intToModuleType 3 = Enrichment
-intToModuleType 4 = Honor
+intToModuleType :: Int -> Maybe ModuleType
+intToModuleType 1 = Just Core
+intToModuleType 2 = Just Elective
+intToModuleType 3 = Just Enrichment
+intToModuleType 4 = Just Honor
+intToModuleType x = Nothing
 
 suffixToString :: SuffixType -> String
 suffixToString EmptySuffix = ""
@@ -28,14 +29,15 @@ suffixToString CorePrereq = "C"
 suffixToString MTinLieu = "M"
 suffixToString External = "V"
 
-stringToSuffix :: String -> SuffixType
-stringToSuffix "" = EmptySuffix
-stringToSuffix "A" = Preclusion
-stringToSuffix "C" = CorePrereq
-stringToSuffix "M" = MTinLieu
-stringToSuffix "V" = External
+stringToSuffix :: String -> Maybe SuffixType
+stringToSuffix "" = Just EmptySuffix
+stringToSuffix "A" = Just Preclusion
+stringToSuffix "C" = Just CorePrereq
+stringToSuffix "M" = Just MTinLieu
+stringToSuffix "V" = Just External
+stringToSuffix x = Nothing
 
-charToSuffix :: Char -> SuffixType
+charToSuffix :: Char -> Maybe SuffixType
 charToSuffix c = stringToSuffix [c]
 
 type CodeString = String
@@ -48,26 +50,26 @@ moduleTypeIdx = (3,4)
 moduleNumIdx = (4,6)
 suffixIdx = (6,7)
 
-getSuffix:: CodeString -> SuffixType
+getSuffix:: CodeString -> Maybe SuffixType
 getSuffix code = extractAttribute code suffixIdx stringToSuffix
 
-getYear:: CodeString -> Year
+getYear:: CodeString -> Maybe Year
 getYear code = extractAttribute code yearIdx (year.read)
 
-getModuleType :: CodeString -> ModuleType
+getModuleType :: CodeString -> Maybe ModuleType
 getModuleType code = extractAttribute code moduleTypeIdx (intToModuleType.read)
 
-getModuleNum :: CodeString -> ModuleNum
-getModuleNum code = extractAttribute code moduleNumIdx id
+getModuleNum :: CodeString -> Maybe ModuleNum
+getModuleNum code = extractAttribute code moduleNumIdx Just
 
-getSubjectCode :: CodeString -> SubjectCode
-getSubjectCode code = extractAttribute code subjectCodeIdx read
+getSubjectCode :: CodeString -> Maybe SubjectCode
+getSubjectCode code = extractAttribute code subjectCodeIdx (Just . read)
 
 extractAttribute :: (Integral b) => CodeString -> (b, b) -> (String -> a) -> a
 extractAttribute code (start,end) func = func (subList code start end)
 
-moduleCode :: CodeString -> ModuleCode
-moduleCode str = Code subjectcode year moduletype modulenum suffix
+moduleCode :: CodeString -> Maybe ModuleCode
+moduleCode str = Code <$> subjectcode <*> year <*> moduletype <*> modulenum <*> suffix
     where subjectcode = getSubjectCode str
           year = getYear str
           moduletype = getModuleType str

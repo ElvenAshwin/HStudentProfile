@@ -16,6 +16,8 @@ data DVGrade = Unsatisfactory | Satisfactory
 type Score = Double
 data LetterGrade = LetterGrade String Score deriving (Eq)
 
+--index is very strict, and triggers an error on failure - should ONLY be used internally
+--Any part of this module exposed (like grade) should use index', which returns a Maybe
 class GradeRepresentation a where
     index' :: a -> Maybe Int
     index :: a -> Int 
@@ -69,7 +71,7 @@ instance Enum LetterGrade where
     enumFromThenTo = defaultEnumFromThenTo
     enumFromThen = boundedEnumFromThen
     
-grade :: (GradeRepresentation a) => a-> LetterGrade
-grade repr = grades_assoc !! (index repr)
+grade :: (GradeRepresentation a) => a-> Maybe LetterGrade
+grade repr = (!!) <$> (pure grades_assoc) <*> (index' repr)
 
 
