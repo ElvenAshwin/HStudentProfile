@@ -1,7 +1,8 @@
 import Module
 import Common
-import Data.Char (isAlpha)
+import Data.Char (isAlpha, isDigit)
 import Data.List (groupBy)
+import Text.Read (readMaybe)
 
 type ModuleNum = String
 
@@ -54,16 +55,20 @@ getSuffix:: CodeString -> Maybe SuffixType
 getSuffix code = extractAttribute code suffixIdx stringToSuffix
 
 getYear:: CodeString -> Maybe Year
-getYear code = extractAttribute code yearIdx (year.read)
+getYear code = extractAttribute code yearIdx (\str -> readMaybe str >>= year)
 
 getModuleType :: CodeString -> Maybe ModuleType
-getModuleType code = extractAttribute code moduleTypeIdx (intToModuleType.read)
+getModuleType code = extractAttribute code moduleTypeIdx (\str -> readMaybe str >>= intToModuleType)
 
 getModuleNum :: CodeString -> Maybe ModuleNum
-getModuleNum code = extractAttribute code moduleNumIdx Just
+getModuleNum code = extractAttribute code moduleNumIdx moduleNumChecker
+    where gap (a,b) = b-a
+          moduleNumChecker str
+            | (length str == gap moduleNumIdx)  && (all isDigit str) = Just str
+            | otherwise = Nothing
 
 getSubjectCode :: CodeString -> Maybe SubjectCode
-getSubjectCode code = extractAttribute code subjectCodeIdx (Just . read)
+getSubjectCode code = extractAttribute code subjectCodeIdx readMaybe
 
 extractAttribute :: (Integral b) => CodeString -> (b, b) -> (String -> a) -> a
 extractAttribute code (start,end) func = func (subList code start end)
@@ -80,5 +85,4 @@ moduleCode str = Code <$> subjectcode <*> year <*> moduletype <*> modulenum <*> 
 instance Show ModuleCode where
     show (Code subj year mtype num suffix) = 
         concat.quintupletToList.quintupletMap (show,show,show,id,id) $ (subj, asInt(year), moduleTypeToInt mtype, num, suffixToString suffix)
-
 
