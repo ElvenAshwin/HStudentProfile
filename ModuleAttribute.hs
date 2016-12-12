@@ -1,14 +1,48 @@
-import Module
+module ModuleAttributes(Year
+  , ModuleCode (..)
+  , moduleCode
+  , year
+  , YearType(..)
+  , ModuleType(..)
+  , SuffixType(..)
+  , asInt
+  , moduleTypeToInt
+  , intToModuleType
+  , suffixToString
+  , stringToSuffix
+  , charToSuffix
+    c) where
+
+
 import Common
 import Data.Char (isAlpha, isDigit)
 import Data.List (groupBy)
 import Text.Read (readMaybe)
 
 type ModuleNum = String
+type CodeString = String
 
 data SubjectCode = AE|CL|EL|GM|MA|PE|AR|CM|EN|HD|TH|BG|CS|FR|HY|ML|TL|BL|DV|GE|IH|MU
                  | UD|CH|EC|GJ|JP|PC deriving (Show, Read, Eq)
-data ModuleCode = Code SubjectCode Year ModuleType ModuleNum SuffixType deriving (Eq)
+data ModuleCode = Code {subjectCode::SubjectCode
+                       ,acadLevel::Year 
+                       ,moduleType::ModuleType
+                       ,moduleNum::ModuleNum
+                       ,suffix::SuffixType} deriving (Eq)
+
+data Year = Year Int deriving (Show,Eq,Ord)
+data YearType = Foundation | Intermediate | Advanced deriving (Show, Read, Eq, Ord, Enum)
+data ModuleType = Elective | Enrichment | Core | Honor deriving (Show, Read, Eq)
+data SuffixType = EmptySuffix | Preclusion 
+                | CorePrereq | MTinLieu | External deriving (Show, Read, Eq)
+
+year :: Int -> Maybe Year
+year x
+  | x>=1 && x<=6 = Just $ Year x
+  | otherwise = Nothing
+
+asInt :: Year -> Int
+asInt (Year n) = n
 
 moduleTypeToInt :: ModuleType -> Int
 moduleTypeToInt Core = 1
@@ -41,7 +75,6 @@ stringToSuffix x = Nothing
 charToSuffix :: Char -> Maybe SuffixType
 charToSuffix c = stringToSuffix [c]
 
-type CodeString = String
 
 --These statements define the structure of the module code string
 --(start, end), not inclusive of end
@@ -81,6 +114,23 @@ moduleCode str = Code <$> subjectcode <*> year <*> moduletype <*> modulenum <*> 
           modulenum = getModuleNum str
           suffix = getSuffix str
 
+instance Bounded Year where
+    minBound = Year 1
+    maxBound = Year 6
+
+instance Enum Year where
+    succ all@(Year num)
+      | all < maxBound = Year $ num+1
+      | otherwise = error "At maximum"
+    pred all@(Year num)
+      | all > minBound = Year $ num-1
+      | otherwise = error "At minimum"
+    toEnum num = Year num
+    fromEnum (Year n) = n
+    enumFromTo = defaultEnumFromTo
+    enumFrom = boundedEnumFrom
+    enumFromThenTo = defaultEnumFromThenTo
+    enumFromThen = boundedEnumFromThen
 
 instance Show ModuleCode where
     show (Code subj year mtype num suffix) = 
