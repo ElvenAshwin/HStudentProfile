@@ -11,7 +11,7 @@ module ModuleAttributes(Year
   , suffixToString
   , stringToSuffix
   , charToSuffix
-    c) where
+    ) where
 
 
 import Common
