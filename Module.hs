@@ -9,19 +9,27 @@ type Transcript = [ModuleReport]
 data CAP = CAP {totalScore::Score,
                 totalCredits::Credits} deriving (Read)
 
-data Module = Module ModuleCode Credits deriving (Show, Eq)
+data Module = Module {codeOfModule::ModuleCode,
+                      creditsOfModule::Credits} deriving (Show, Eq)
 data ModuleReport = ScoreReport LetterGrade Module Year Semester
                   | EnrichmentReport EnrichmentGrade Module Year Semester
                   | DVReport DVGrade Module Year Semester deriving (Show,Eq)
 
-isModuleType :: ModuleType -> Module -> Bool
-isModuleType mType (Module code _) = moduleType code == mType
+class SimpleAttribute a where
+    is :: Module -> a -> Bool
+    fis:: Maybe Module -> a -> Maybe Bool
+    fis m attr = fmap ((flip is) $ attr) m
+instance SimpleAttribute ModuleType where
+    (Module code _) `is` mType = moduleType code == mType
 
-isYearType :: YearType -> Module -> Bool
-isYearType yType (Module code _) = (yearType . acadLevel) code == yType
+instance SimpleAttribute YearType where
+    (Module code _) `is` yType = (yearType . acadLevel) code == yType
 
-isSuffixType :: SuffixType -> Module -> Bool
-isSuffixType sType (Module code _) = suffix code == sType
+instance SimpleAttribute SuffixType where
+    (Module code _) `is` sType = suffix code == sType
+
+class GettableAttribute a where
+    getAttr::Module -> a
 
 isSubject :: CSStatus -> Module -> Subject -> Bool
 isSubject status m subj = (subjectOfModule status m) == subj
@@ -42,6 +50,13 @@ capRatio (CAP score credits) = (numerator $ toRatio score) % (credits*(denominat
 
 addCAP :: CAP -> CAP -> CAP
 addCAP (CAP aScore aCredit) (CAP bScore bCredit) = (CAP (aScore+bScore) (aCredit+bCredit))
+
+--Returns the empty CAP for da vinci and enrichment modules
+moduleCAP :: ModuleReport -> CAP
+moduleCAP (ScoreReport grade m _ _) = 
+    CAP (score grade * (fromIntegral $ creditsOfModule m)) (creditsOfModule m)
+
+moduleCAP _ = mempty
 
 --A score is either an integer, or an integer with a half
 --So this works for all scores
