@@ -1,4 +1,5 @@
 import ModuleAttributes
+import Grading
 import Data.Ratio
 
 type Score = Double
@@ -8,11 +9,30 @@ type Transcript = [ModuleReport]
 data CAP = CAP {totalScore::Score,
                 totalCredits::Credits} deriving (Read)
 
-data Module = Module ModuleCode Credits deriving (Show, Eq, Read)
-data ModuleReport = ScoreReport LetterGrade Year Semester
-                  | EnrichmentReport EnrichmentGrade Year Semester
-                  | DVReport DVGrade Year Semester deriving (Show,Read,Eq)
+data Module = Module ModuleCode Credits deriving (Show, Eq)
+data ModuleReport = ScoreReport LetterGrade Module Year Semester
+                  | EnrichmentReport EnrichmentGrade Module Year Semester
+                  | DVReport DVGrade Module Year Semester deriving (Show,Eq)
 
+isModuleType :: ModuleType -> Module -> Bool
+isModuleType mType (Module code _) = moduleType code == mType
+
+isYearType :: YearType -> Module -> Bool
+isYearType yType (Module code _) = (yearType . acadLevel) code == yType
+
+isSuffixType :: SuffixType -> Module -> Bool
+isSuffixType sType (Module code _) = suffix code == sType
+
+isSubject :: CSStatus -> Module -> Subject -> Bool
+isSubject status m subj = (subjectOfModule status m) == subj
+
+isMT :: Module -> Bool
+isMT m = extract $ (isSubject Ambiguous m) <$> subject "Mother Tongue"
+    where extract Nothing = False
+          extract (Just x) = x
+
+subjectOfModule :: CSStatus -> Module -> Subject
+subjectOfModule status (Module code _) = (subjectCodeToSubject . subjectCode) code status
 
 capScore :: CAP -> Double
 capScore (CAP score credits) = score/(fromIntegral credits)
@@ -33,7 +53,6 @@ cap 0 0 = mempty
 cap a b
   | (CAP a b) >= minBound && (CAP a b) <= maxBound = Just $ CAP a b
   | otherwise = Nothing
-
 
 instance Eq CAP where
     --Implemented like this to avoid the horrors of floating point comparisons
