@@ -11,7 +11,15 @@ module ModuleAttributes(Year
   , suffixToString
   , stringToSuffix
   , charToSuffix
-    ) where
+  , Subject
+  , subject
+  , CSStatus(..)
+  , subject'
+  , subjectCodeToSubject
+  , subjectCodesOf
+  , SubjectCode(..)
+  , yearType
+  , Semester) where
 
 
 import Common
@@ -21,9 +29,13 @@ import Text.Read (readMaybe)
 
 type ModuleNum = String
 type CodeString = String
+type SubjectName = String
 
-data SubjectCode = AE|CL|EL|GM|MA|PE|AR|CM|EN|HD|TH|BG|CS|FR|HY|ML|TL|BL|DV|GE|IH|MU
+data SubjectCode = AE|CL|EL|GM|MA|PE|AR|CM|EN|HD|TH|BG|CS|FR|HY|ML|MH|TL|BL|DV|GE|IH|MU
                  | UD|CH|EC|GJ|JP|PC deriving (Show, Read, Eq)
+
+data Subject = Subject SubjectName [SubjectCode] deriving (Eq)
+
 data ModuleCode = Code {subjectCode::SubjectCode
                        ,acadLevel::Year 
                        ,moduleType::ModuleType
@@ -31,10 +43,66 @@ data ModuleCode = Code {subjectCode::SubjectCode
                        ,suffix::SuffixType} deriving (Eq)
 
 data Year = Year Int deriving (Show,Eq,Ord)
+data Semester = Sem1 | Sem2 deriving (Show,Eq,Ord,Enum)
 data YearType = Foundation | Intermediate | Advanced deriving (Show, Read, Eq, Ord, Enum)
 data ModuleType = Elective | Enrichment | Core | Honor deriving (Show, Read, Eq)
 data SuffixType = EmptySuffix | Preclusion 
                 | CorePrereq | MTinLieu | External deriving (Show, Read, Eq)
+
+
+--CSisMath implies CS is part of the "Mathematics" subject
+--Otherwise, CS gets its own "Computer Science" subject
+--Ambiguous implies the outcome does not matter (behavior for calling Math or CS
+--with Ambiguous is undefined)
+data CSStatus = CSisMath | CSisSubject | Ambiguous deriving (Show, Read, Eq)
+
+--apply list to a CSStatus in order to retrieve appropriate list of subjects
+subjects = map (\str -> (\status -> subject' status str)) subjectnames
+    where subjectnames = ["Mathematics", "Mother Tongue", "Physics", "Humanities", "English"
+            , "Chemistry", "Biology", "Computing Studies"]
+
+--If you are dealing with CS or Math, explicitly tell if CS should be part of math
+--This function serves as the definition for subjects - all other functions must
+--be compatible with changes to this function
+subject' :: CSStatus -> SubjectName -> Maybe Subject
+subject' status str = case str of
+                       "Mathematics" -> Just $ Subject "Mathematics " (if status==CSisMath
+                                                                   then [MA,CS]
+                                                                   else [MA])
+                       
+                       "Mother Tongue" -> Just $ Subject "Mother Tongue" [GM,HD,MH
+                                                                         ,TH,TL,BG
+                                                                         ,ML,CL,FR
+                                                                         ,UD,CH,GJ
+                                                                         ,JP]
+
+                       "Physics" -> Just $ Subject "Physics" [PC]
+                       "Humanities" -> Just $ Subject "Humanities" [EN, AR, HY, GE, IH, MU, EC]
+                       "English" -> Just $ Subject "English" [EL]
+                       "Chemistry" -> Just $ Subject "Chemistry" [CM]
+                       "Biology" -> Just $ Subject "Biology" [BL]
+                       "Math" -> subject' status "Mathematics"
+                       "Computing Studies" -> if status == CSisSubject
+                                                 then Just $ Subject "Computing Studies" [CS]
+                                                 else Nothing
+                       x -> Nothing
+
+-- If you are not dealing with CS or Math, this function will save spaces
+-- But do NOT call if dealing with CS or Math - ambiguous to reader, undefined
+-- behavior
+subject :: SubjectName -> Maybe Subject
+subject = subject' Ambiguous
+
+subjectCodesOf :: Subject -> [SubjectCode]
+subjectCodesOf (Subject name ls) = ls
+
+--This is admittedly a pure use of a monad, but it works so well!
+--This function is guaranteed to respond to alterations in the definition in subject'
+subjectCodeToSubject :: SubjectCode -> CSStatus -> Subject
+subjectCodeToSubject code status = head (do
+    Just subj <- subjects <*> (pure status)
+    if code `elem` (subjectCodesOf subj) then [subj] else [])
+
 
 year :: Int -> Maybe Year
 year x
@@ -43,6 +111,12 @@ year x
 
 asInt :: Year -> Int
 asInt (Year n) = n
+
+yearType :: Year -> YearType
+yearType (Year n)
+  | n `elem` [1,2] = Foundation
+  | n `elem` [3,4] = Intermediate
+  | n `elem` [5,6] = Advanced
 
 moduleTypeToInt :: ModuleType -> Int
 moduleTypeToInt Core = 1
@@ -135,4 +209,7 @@ instance Enum Year where
 instance Show ModuleCode where
     show (Code subj year mtype num suffix) = 
         concat.quintupletToList.quintupletMap (show,show,show,id,id) $ (subj, asInt(year), moduleTypeToInt mtype, num, suffixToString suffix)
+
+instance Show Subject where
+    show (Subject name _) = name
 
