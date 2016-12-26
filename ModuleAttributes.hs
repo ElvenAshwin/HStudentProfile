@@ -109,9 +109,6 @@ year x
   | x>=1 && x<=6 = Just $ Year x
   | otherwise = Nothing
 
-asInt :: Year -> Int
-asInt (Year n) = n
-
 yearType :: Year -> YearType
 yearType (Year n)
   | n `elem` [1,2] = Foundation
