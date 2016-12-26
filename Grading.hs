@@ -2,7 +2,8 @@ module Grading (
     EnrichmentGrade(..)
   , DVGrade(..)
   , LetterGrade
-  , grade) where
+  , grade
+      , score) where
 
 import Control.Exception (assert)
 import Data.List (elemIndex,find)
@@ -74,4 +75,5 @@ instance Enum LetterGrade where
 grade :: (GradeRepresentation a) => a-> Maybe LetterGrade
 grade repr = (!!) <$> (pure grades_assoc) <*> (index' repr)
 
-
+score :: LetterGrade -> Score
+score (LetterGrade _ scr) = scr
