@@ -5,7 +5,6 @@ module ModuleAttributes(Year
   , YearType(..)
   , ModuleType(..)
   , SuffixType(..)
-  , asInt
   , moduleTypeToInt
   , intToModuleType
   , suffixToString
@@ -205,7 +204,7 @@ instance Enum Year where
 
 instance Show ModuleCode where
     show (Code subj year mtype num suffix) = 
-        concat.quintupletToList.quintupletMap (show,show,show,id,id) $ (subj, asInt(year), moduleTypeToInt mtype, num, suffixToString suffix)
+        concat.quintupletToList.quintupletMap (show,show,show,id,id) $ (subj, fromEnum year, moduleTypeToInt mtype, num, suffixToString suffix)
 
 instance Show Subject where
     show (Subject name _) = name
